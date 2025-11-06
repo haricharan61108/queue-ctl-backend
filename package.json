@@ -1,0 +1,21 @@
+{
+  "name": "queue-ctl",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --exec ts-node --esm src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "commander": "^14.0.2",
+    "dotenv": "^17.2.3",
+    "prisma": "^6.19.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "ts-node": "^10.9.2"
+  }
+}
