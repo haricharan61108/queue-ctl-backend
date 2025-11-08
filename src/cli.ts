@@ -2,8 +2,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import { Command } from "commander";
 import enqueue from "./commands/enqueue.ts";
-// import worker from "./commands/worker";
-// import status from "./commands/status";
+import worker from "./commands/worker.ts";
+// import status from "./commands/status.ts";
 
 const program = new Command();
 
@@ -18,11 +18,11 @@ program
   .description("Add a new job to the queue")
   .action(enqueue)
 
-// program
-//   .command("worker")
-//   .option("--count <number>", "Number of workers", "1")
-//   .description("Start one or more workers")
-//   .action(worker);
+program
+  .command("worker")
+  .option("--count <number>", "Number of workers", "1")
+  .description("Start one or more workers")
+  .action(worker);
 
 // program
 //   .command("status")

@@ -3,29 +3,36 @@ import { JobState } from "../../generated/prisma/index.js";
 
 export async function claimJob() {
     return prisma.$transaction(async(tx)=> {
-        const job = await tx.job.findFirst({
-            where: {
-                state: JobState.pending
-            },
-            orderBy: {
-                createdAt: "asc"
-            }
-        });
+        const jobs = await tx.$queryRaw<Array<{
+            id: string;
+            command: string;
+          state: string;
+         attempts: number;
+         maxRetries: number;
+        createdAt: Date;
+        updatedAt: Date;
+        nextRunAt: Date | null;
+        errorMessage: string | null;
+        }>>`
+        SELECT * FROM "Job" where state='pending' ORDER BY 
+        "createdAt" ASC LIMIT 1 FOR UPDATE SKIP LOCKED;
+        `;
 
-        if(!job) {
-            return null;
-        }
+        if (!jobs || jobs.length === 0) {
+            return null; 
+          }
 
-        const claimed = await tx.job.update({
-            where: {
-                id: job.id,
-            },
+          const job = jobs[0];
+
+          const claimed = await tx.job.update({
+            where: { id: job.id },
             data: {
-                state: JobState.processing,
-                updatedAt: new Date(),
-            }
-        });
+              state: JobState.processing,
+              updatedAt: new Date(),
+            },
+          });
 
-        return claimed;
-    })
+          return claimed;
+    });
+    
 }
