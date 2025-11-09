@@ -3,6 +3,7 @@ dotenv.config();
 import { Command } from "commander";
 import enqueue from "./commands/enqueue.ts";
 import worker from "./commands/worker.ts";
+import { listDLQ, retryDLQ } from './commands/dlq.ts';
 // import status from "./commands/status.ts";
 
 const program = new Command();
@@ -23,6 +24,23 @@ program
   .option("--count <number>", "Number of workers", "1")
   .description("Start one or more workers")
   .action(worker);
+
+
+program
+  .command("dlq")
+  .description("View and manage the Dead Letter Queue")
+  .option("--list", "List jobs in DLQ")
+  .argument("[jobId]", "Retry a specific dead job", null)
+  .action((jobId, options) => {
+    if (options.list) {
+      return listDLQ();
+    }
+    if (jobId) {
+      return retryDLQ(jobId);
+    }
+    console.log("❌ Usage:\n  queuectl dlq --list\n  queuectl dlq <jobId>");
+  });
+
 
 // program
 //   .command("status")

@@ -14,8 +14,12 @@ export async function claimJob() {
         nextRunAt: Date | null;
         errorMessage: string | null;
         }>>`
-        SELECT * FROM "Job" where state='pending' ORDER BY 
-        "createdAt" ASC LIMIT 1 FOR UPDATE SKIP LOCKED;
+        SELECT * FROM "Job"
+       WHERE state = 'pending'
+      AND ("nextRunAt" IS NULL OR "nextRunAt" <= NOW())
+      ORDER BY "createdAt" ASC
+      LIMIT 1
+      FOR UPDATE SKIP LOCKED
         `;
 
         if (!jobs || jobs.length === 0) {

@@ -5,6 +5,7 @@ import { promisify } from "util";
 import { JobState } from "../../generated/prisma/index.js";
 import { claimJob } from "../lib/claimJob.ts";
 
+const execAsync = promisify(exec);
 function sleep(ms: number) {
     return new Promise((res)=> setTimeout(res,ms));
 }
@@ -17,7 +18,7 @@ async function processOneJob(workerId: number):Promise<boolean> {
     console.log(`[W${workerId}] Found job: ${job.id} → ${job.command}`);
 
     try {
-        const { stdout, stderr } = await exec(job.command);
+        const { stdout, stderr } = await execAsync(job.command);
 
         await prisma.job.update({
             where: {
@@ -32,16 +33,45 @@ async function processOneJob(workerId: number):Promise<boolean> {
 
         console.log(`[W${workerId}] ✅ Job ${job.id} completed.`);
     } catch (err:any) {
+       const attemptsAfter = job.attempts+1;
+       const cfg = await prisma.config.findUnique({
+        where: {
+            id: 1
+        }
+       });
+
+       const maxRetries = job.maxRetries ?? cfg?.maxRetries ?? 3;
+       const backoffBase = cfg?.backoffBase ?? 2;
+       
+       if(attemptsAfter>=maxRetries) {
         await prisma.job.update({
             where: { id: job.id },
             data: {
-              state: JobState.failed,
+              state: JobState.dead,
+              attempts: attemptsAfter,
               errorMessage: String(err.message || err),
               updatedAt: new Date(),
             },
           });
-
-          console.log(`[W${workerId}] ❌ Job ${job.id} failed: ${err.message}`);
+          console.log(`[W${workerId}] 💀 Job ${job.id} moved to DLQ after ${attemptsAfter} attempts`);
+       }
+       else {
+        const delaySeconds = Math.pow(backoffBase, attemptsAfter);
+        const nextRun = new Date(Date.now() + delaySeconds * 1000);
+        await prisma.job.update({
+            where: { id: job.id },
+            data: {
+              state: JobState.pending,
+              attempts: attemptsAfter,
+              nextRunAt: nextRun,
+              errorMessage: String(err.message || err),
+              updatedAt: new Date(),
+            },
+          });    
+          console.log(
+            `[W${workerId}] 🔁 Job ${job.id} failed (attempt ${attemptsAfter}) → retry in ${delaySeconds}s`
+          );
+       }
     }
 
     return true;
