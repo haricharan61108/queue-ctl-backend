@@ -4,7 +4,7 @@ import { Command } from "commander";
 import enqueue from "./commands/enqueue.ts";
 import worker from "./commands/worker.ts";
 import { listDLQ, retryDLQ } from './commands/dlq.ts';
-// import status from "./commands/status.ts";
+import status from "./commands/status.ts";
 
 const program = new Command();
 
@@ -42,10 +42,10 @@ program
   });
 
 
-// program
-//   .command("status")
-//   .description("Show job and worker status")
-//   .action(status);
+program
+  .command("status")
+  .description("Show job and worker status")
+  .action(status);
 
 program.parse();
 

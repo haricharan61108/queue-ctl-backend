@@ -20,9 +20,9 @@ model Job {
   state        JobState @default(pending)
   attempts     Int      @default(0)
   maxRetries   Int      @default(3)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  nextRunAt    DateTime?
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt      @db.Timestamptz
+  nextRunAt    DateTime? @db.Timestamptz
   errorMessage String?
 }
 
