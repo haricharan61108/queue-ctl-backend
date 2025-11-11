@@ -5,6 +5,7 @@ import enqueue from "./commands/enqueue.ts";
 import worker from "./commands/worker.ts";
 import { listDLQ, retryDLQ } from './commands/dlq.ts';
 import status from "./commands/status.ts";
+import interactive from "./commands/interactive.ts";
 
 const program = new Command();
 
@@ -46,6 +47,11 @@ program
   .command("status")
   .description("Show job and worker status")
   .action(status);
+
+program
+  .command("interactive")
+  .description("Start interactive mode (run multiple commands)")
+  .action(interactive);
 
 program.parse();
 

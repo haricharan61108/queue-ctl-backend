@@ -2,12 +2,13 @@
 import prisma from "../db.ts";
 import { JobState } from "../../generated/prisma/index.js";
 
-export default async function enqueue(jobJson: string) {
+export default async function enqueue(jobJson: string, exitOnComplete = true) {
     try {
         const jobData = JSON.parse(jobJson);
         if(!jobData.id || !jobData.command) {
             console.error("❌ Missing required fields: 'id' and 'command'");
-            process.exit(1);
+            if (exitOnComplete) process.exit(1);
+            return;
         }
 
         const job = await prisma.job.create({
@@ -22,7 +23,7 @@ export default async function enqueue(jobJson: string) {
         console.log(`✅ Job '${job.id}' enqueued successfully!`);
         console.log(job);
 
-        process.exit(0);
+        if (exitOnComplete) process.exit(0);
     } catch (err:any) {
         if (err.code === "P2002") {
             console.error("⚠️ Job ID already exists. Please use a unique ID.");
@@ -31,6 +32,6 @@ export default async function enqueue(jobJson: string) {
           } else {
             console.error("❌ Error while enqueueing job:", err.message);
           }
-          process.exit(1);
+          if (exitOnComplete) process.exit(1);
     }
 }
